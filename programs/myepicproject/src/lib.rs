@@ -11,10 +11,44 @@ declare_id!("6cFQPTmKF8vzYu1v8Gktj3JAVz6C5EnhBDztEzXPqGEM");
 #[program]
 pub mod sceneportal {
     use super::*;
-    pub fn start_stuff_off(_ctx: Context<StartStuffOff>) -> Result <()> {
+    pub fn start_stuff_off(ctx: Context<StartStuffOff>) -> Result <()> {
+
+        // &mut is a mutable reference to base_account. When you do this, it allows you to 
+        // make changes to base_account. Otherwise it'll be working with a local copy of base_account:
+        let base_account = &mut ctx.accounts.base_account;
+        base_account.total_gifs = 0;
+
+        Ok(())
+    }
+
+    pub fn add_gif(ctx: Context<AddGif>) -> Result <()> {
+        let base_account = &mut ctx.accounts.base_account;
+        base_account.total_gifs += 1;
         Ok(())
     }
 }
 
 #[derive(Accounts)]
-pub struct StartStuffOff {}
+pub struct StartStuffOff<'info> {
+    
+    // This tells Solana how to initialize BaseAccount:
+    #[account(init, payer = user, space = 9000)]
+    pub base_account: Account<'info, BaseAccount>,
+
+    // Signer: Data passed into the program that proves to the program the user actually owns their wallet account:
+    // Program: A program that creators of Solana deployed that other programs can talk to 
+    #[account(mut)]
+    pub user: Signer<'info>,
+    pub system_program: Program <'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct AddGif<'info> {
+  #[account(mut)]
+  pub base_account: Account<'info, BaseAccount>,
+}
+
+#[account]
+pub struct BaseAccount {
+    pub total_gifs: u64,
+}
